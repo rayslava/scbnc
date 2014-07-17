@@ -1,10 +1,10 @@
 package bnc.test
 
-import org.scalatest.FlatSpec
-import com.rayslava.scbnc._
+import org.scalatest._
+import com.rayslava.scbnc
 
-class bncTest extends FlatSpec {
+class bncTest extends FlatSpec with Matchers {
   "test (4)" should "be 144" in {
-    assert (test(4) == 144)
+    scbnc.test(4) should be (144)
   }
 }
