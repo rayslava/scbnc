@@ -21,7 +21,11 @@ class parserFuncTest extends FlatSpec with Matchers {
   val actorRef = TestActorRef(new Parser)
   val p = actorRef.underlyingActor
 
-   "Parsing line without links" should "return this line" in {
+  "Single link http://site.com" should "respond with link" in {
+    p.parse(new Message("Single link http://site.com")) should be ("http://site.com")
+  }
+
+  "Parsing line without links" should "return this line" in {
     p.parse(new Message("Just plaintext line")) should be ("Just plaintext line")
   }
 
