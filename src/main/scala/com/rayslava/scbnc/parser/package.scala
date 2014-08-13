@@ -30,13 +30,19 @@ class Parser extends Actor {
   def parse(msg: Message) = {
     val linkRegex = new scala.util.matching.Regex(""".*(http://[^\s]+)(\s|$)""", "link")
     log.debug("Parsing " + msg)
-    sender ! "ok"
-    linkRegex.findAllIn(msg.text).matchData foreach {m => log.error(m.group("link"))}
+    linkRegex.findAllIn(msg.text).matchData foreach {
+      m => {
+        log.error("FAIL")
+        download(m.group("link"))
+      }
+    }
     msg.text
   }
 
-  def download(link: String) =
-    log.debug("Download request for " + link)
+  def download(link: String): Int = {
+    log.debug("Download request for '" + link + "'")
+    0
+  }
 
   def receive = {
     case msg @ Message(text) => parse(msg)

@@ -1,6 +1,12 @@
 package com.rayslava.scbnc.parser.test
 
-import org.scalatest._
+import org.specs2.mock.Mockito
+import org.specs2.specification._
+import org.specs2.matcher._
+import org.specs2.mutable._
+import org.mockito.Matchers._
+import org.mockito.Mockito.doReturn
+import org.mockito.Mock
 import com.rayslava.scbnc.parser._
 import com.typesafe.config._
 import akka.testkit._
@@ -13,35 +19,42 @@ import akka.actor.ActorSystem
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import akka.pattern.ask
+import org.specs2.specification._
 
-/* Firstly let's test just functions, without actor behavior */
-class parserFuncTest extends FlatSpec with Matchers {
+class parsePlainText extends Specification with Mockito {
   implicit val system = ActorSystem("MyActorSystem", ConfigFactory.load())
-  implicit val timeout = Timeout(5 seconds)
+
   val actorRef = TestActorRef(new Parser)
-  val p = actorRef.underlyingActor
+  val actor = actorRef.underlyingActor
 
-  "Single link http://site.com" should "respond with link" in {
-    p.parse(new Message("Single link http://site.com")) should be ("http://site.com")
+  "Parsing plain text line" should {
+    "return this line" in {
+      val obj = spy(actor)
+      obj.parse(new Message("Just plaintext line")) must be ("Just plaintext line")
+      there was no(obj).download(anyObject())
+    }
   }
-
-  "Parsing line without links" should "return this line" in {
-    p.parse(new Message("Just plaintext line")) should be ("Just plaintext line")
-  }
-
 }
 
-
-class parserActorTest extends FlatSpec with Matchers {
+class parseTextWithLink extends Specification with Mockito {
   implicit val system = ActorSystem("MyActorSystem", ConfigFactory.load())
-  implicit val timeout = Timeout(5 seconds)
 
-  /* Firstly let's test just functions, without actor behavior */
+  val link = "http://site.com"
+  val text = "Single link "
 
   val actorRef = TestActorRef(new Parser)
+  val actor = actorRef.underlyingActor
 
-  // hypothetical message stimulating a '42' answer
-  val future = actorRef ? new Message("Line to parse")
-  val Success(response: String) = future.value.get
-  response should be("ok")
+  "Parsing text with links" should {
+    "call download for " + link + " and return the same line" in {
+      val obj = spy(actor)
+      obj.parse(new Message(text + link)) must be_== (text + link)
+      there was one(obj).download(link)
+    }
+    "call download for each link if there are many" in {
+      val obj = spy(actor)
+      obj.parse(new Message(text + link + " " + link)) must be_== (text + link + " " + link)
+      there was two(obj).download(link)
+    }
+  }
 }
