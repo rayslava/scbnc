@@ -1,25 +1,14 @@
 package com.rayslava.scbnc.parser.test
 
-import org.specs2.mock.Mockito
 import org.specs2.specification._
-import org.specs2.matcher._
 import org.specs2.mutable._
+import org.specs2.mock.Mockito
 import org.mockito.Matchers._
-import org.mockito.Mockito.doReturn
-import org.mockito.Mock
-import com.rayslava.scbnc.parser._
-import com.typesafe.config._
-import akka.testkit._
-import scala.util.{Try, Success, Failure}
-import akka.util.Timeout
-import akka.actor.Actor
-import akka.actor.Props
-import akka.event.Logging
+import akka.testkit.TestActorRef
 import akka.actor.ActorSystem
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import akka.pattern.ask
-import org.specs2.specification._
+import com.typesafe.config._
+
+import com.rayslava.scbnc.parser._
 
 class parsePlainText extends Specification with Mockito {
   implicit val system = ActorSystem("MyActorSystem", ConfigFactory.load())
