@@ -1,3 +1,6 @@
+import com.typesafe.sbt.SbtNativePackager._
+import NativePackagerKeys._
+
 organization := "com.rayslava"
 
 name := "scbnc"
@@ -5,6 +8,8 @@ name := "scbnc"
 version := "0.1"
 
 scalaVersion := "2.11.2"
+
+packageArchetype.java_application
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
