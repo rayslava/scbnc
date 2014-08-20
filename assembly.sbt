@@ -1,8 +1,8 @@
-import AssemblyKeys._ // put this at the top of the file
+import AssemblyKeys._
 
 assemblySettings
 
 jarName in assembly := { s"${name.value}-${version.value}.jar" }
 
-test in assembly := {}
+// test in assembly := {}
 

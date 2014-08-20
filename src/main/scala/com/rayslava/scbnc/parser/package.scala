@@ -1,6 +1,6 @@
 package com.rayslava.scbnc.parser
 /** This package implements functions for parsing received messages and
-    extract all the interesting information from there
+  * extract all the interesting information from there
   */
 
 import akka.actor.Actor
@@ -28,20 +28,18 @@ class Parser extends Actor {
   val log = Logging(context.system, this)
 
   def parse(msg: Message) = {
-    val linkRegex = new scala.util.matching.Regex(""".*(http://[^\s]+)(\s|$)""", "link")
+    val linkRegex = """(http://[^\s]+)(\s|$)""".r
     log.debug("Parsing " + msg)
-    linkRegex.findAllIn(msg.text).matchData foreach {
-      m => {
-        log.error("FAIL")
-        download(m.group("link"))
-      }
-    }
+    linkRegex findAllIn msg.text foreach (
+      _ match {
+        case linkRegex(link, _) => download(link)
+        case _ => log.debug("No links found")
+      })
     msg.text
   }
 
-  def download(link: String): Int = {
+  def download(link: String) = {
     log.debug("Download request for '" + link + "'")
-    0
   }
 
   def receive = {
