@@ -1,12 +1,13 @@
 package com.rayslava.scbnc.test
 
 import org.specs2.mutable.Specification
+import org.specs2.time.NoTimeConversions
 import org.specs2.mock.Mockito
 import org.mockito.Matchers._
 import akka.testkit.TestActorRef
 import akka.actor.ActorSystem
 import com.typesafe.config._
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration._
 import scala.util.Success
 import akka.util.Timeout
 import akka.pattern.ask
@@ -52,9 +53,9 @@ class parseTextWithLink extends Specification with Mockito {
   }
 }
 
-class parseTextFromMessage extends  Specification {
+class parseTextFromMessage extends  Specification with NoTimeConversions {
   implicit val system = ActorSystem("MyActorSystem", ConfigFactory.load())
-  implicit val timeout = Timeout(5 microseconds)
+  implicit val timeout = Timeout(5 seconds)
 
   val link = "http://site.com"
   val text = "Single link "
