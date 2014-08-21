@@ -25,7 +25,7 @@ package object scbnc {
     * @param Arg lolint
     * @return Int
     */
-  def test (Arg: Integer): Integer = (Arg * 3) * (Arg * 3)
+  def func (Arg: Integer): Integer = (Arg * 3) * (Arg * 3)
 
   def main(args: Array[String]) = {
     println("Hey there!")
@@ -36,7 +36,7 @@ package object scbnc {
 
     mya ! "test"
 
-    println( test(4) )
+    println( func(4) )
 
     mya ! new Vote(12)
 

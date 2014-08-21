@@ -1,4 +1,4 @@
-package com.rayslava.scbnc.parser.test
+package com.rayslava.scbnc.test
 
 import org.specs2.specification._
 import org.specs2.mutable._

@@ -1,13 +1,13 @@
-package bnc.test
+package com.rayslava.scbnc.test
 
 import org.specs2.specification._
 import org.specs2.mutable._
 import com.rayslava.scbnc
 
 class bncTest extends Specification {
-  "test (4)" should {
+  "func (4)" should {
     "be 144" in {
-      scbnc.test(4) must be_== (144)
+      scbnc.func(4) must be_== (144)
     }
   }
 }
