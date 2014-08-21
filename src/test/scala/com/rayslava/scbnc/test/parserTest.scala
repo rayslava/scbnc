@@ -71,7 +71,7 @@ class parseTextFromMessage extends  Specification with NoTimeConversions {
       result must be (text)
     }
   }
-
+/*
   "Sending line with link to parser" should {
     "return line without links" in {
       val future = actorRef ? new Message(text + " " + link)
@@ -79,4 +79,5 @@ class parseTextFromMessage extends  Specification with NoTimeConversions {
       result must be (text + " ")
     }
   }
+  */
 }

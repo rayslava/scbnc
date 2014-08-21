@@ -3,7 +3,7 @@ package com.rayslava.scbnc
 /**
  * Module with common classes for the whole project
  */
-package object types {
+object types {
   /** One single text message
     *
     * @param text --- String with message
@@ -17,12 +17,13 @@ package object types {
     *
     * Initiate a download request during creation and saves a data ID in @param Data field
     *
-    * @param text --- link text, starting with "http://"
+    * @param url --- link text, starting with "http://"
     */
-  case class Link(text: String) {
-    val Data = Integral
-
-    override def toString = text
+  case class Link(url: String) {
+    override def toString = url
   }
 
+  class ImageLink(url: String) extends Link(url) {
+    override def toString = "Image from " + url
+  }
 }
