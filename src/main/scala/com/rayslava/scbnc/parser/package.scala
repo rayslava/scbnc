@@ -7,13 +7,6 @@ import akka.actor.Actor
 import akka.event.Logging
 import com.rayslava.scbnc.types.Message
 
-/** Just an http link
-  * 
-  * Needs to be parsed and classified
-  * @param text --- link text, starting with "http://"
-  */
-case class Link(text: String);
-
 class Parser extends Actor {
   val log = Logging(context.system, this)
 
@@ -21,7 +14,7 @@ class Parser extends Actor {
     val linkRegex = """(http://[^\s]+)(\s|$)""".r
     log.debug("Parsing " + msg)
     linkRegex findAllIn msg.text foreach (
-      _ match {
+      {
         case linkRegex(link, _) => download(link)
         case _ => log.debug("No links found")
       })

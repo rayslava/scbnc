@@ -1,9 +1,8 @@
 package com.rayslava
 
-import akka.actor.Actor
-import akka.actor.Props
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.event.Logging
-import akka.actor.ActorSystem
+import com.rayslava.scbnc.parser.Parser
 import com.rayslava.scbnc.types.Message
 
 case class Vote(id: Int)
@@ -31,7 +30,7 @@ package object scbnc {
     val system = ActorSystem("MainSys")
 
     val mya = system.actorOf(Props[MyActor], "mya")
-    val initial_parser = system.actorOf(Props[parser.Parser], "initial_parser")
+    val initial_parser = system.actorOf(Props[Parser], "initial_parser")
 
     mya ! "test"
 

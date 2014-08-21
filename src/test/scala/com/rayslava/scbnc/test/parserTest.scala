@@ -1,19 +1,19 @@
 package com.rayslava.scbnc.test
 
-import org.specs2.mutable.Specification
-import org.specs2.time.NoTimeConversions
-import org.specs2.mock.Mockito
-import org.mockito.Matchers._
-import akka.testkit.TestActorRef
 import akka.actor.ActorSystem
-import com.typesafe.config._
-import scala.concurrent.duration._
-import scala.util.Success
-import akka.util.Timeout
 import akka.pattern.ask
-
+import akka.testkit.TestActorRef
+import akka.util.Timeout
 import com.rayslava.scbnc.parser._
 import com.rayslava.scbnc.types._
+import com.typesafe.config._
+import org.mockito.Matchers._
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.time.NoTimeConversions
+
+import scala.concurrent.duration._
+import scala.util.Success
 
 class parsePlainText extends Specification with Mockito {
   implicit val system = ActorSystem("MyActorSystem", ConfigFactory.load())
@@ -63,14 +63,20 @@ class parseTextFromMessage extends  Specification with NoTimeConversions {
   val actorRef = TestActorRef(new Parser)
   val actor = actorRef.underlyingActor
 
-  "Sending text to parser" should {
+  "Sending plain text to parser" should {
     "return this line" in {
 
       val future = actorRef ? new Message(text)
-
-      // hypothetical message stimulating a '42' answer
       val Success(result: String) = future.value.get
       result must be (text)
+    }
+  }
+
+  "Sending line with link to parser" should {
+    "return line without links" in {
+      val future = actorRef ? new Message(text + " " + link)
+      val Success(result: String) = future.value.get
+      result must be (text + " ")
     }
   }
 }
