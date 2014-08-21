@@ -4,8 +4,7 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.event.Logging
 import akka.actor.ActorSystem
-
-import com.rayslava.scbnc.parser
+import com.rayslava.scbnc.types.Message
 
 case class Vote(id: Int)
 
@@ -14,7 +13,7 @@ class MyActor extends Actor {
   def receive = {
     case "test" => log.info("received test")
     case vote @ Vote(id) => log.info("VOTE " + vote.id)
-    case msg @ parser.Message(text) => log.info("Chat message for parser '" + msg.text +"'")
+    case msg @ Message(text) => log.info("Chat message for parser '" + msg.text +"'")
     case _      => log.info("received unknown message")
   }
 }
@@ -40,7 +39,7 @@ package object scbnc {
 
     mya ! new Vote(12)
 
-    val msg = new parser.Message("Lol")
+    val msg = new Message("Lol")
     initial_parser ! msg
 
     system.shutdown()

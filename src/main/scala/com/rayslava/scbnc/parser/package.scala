@@ -4,18 +4,8 @@ package com.rayslava.scbnc.parser
   */
 
 import akka.actor.Actor
-import akka.actor.Props
 import akka.event.Logging
-import akka.actor.ActorSystem
-import scala.util.matching
-
-/** One single text message
-  *
-  * @param text --- String with message
-  */
-case class Message(text: String) {
-  override def toString = text
-}
+import com.rayslava.scbnc.types.Message
 
 /** Just an http link
   * 
@@ -27,7 +17,7 @@ case class Link(text: String);
 class Parser extends Actor {
   val log = Logging(context.system, this)
 
-  def parse(msg: Message) = {
+  def parse(msg: Message): Unit = {
     val linkRegex = """(http://[^\s]+)(\s|$)""".r
     log.debug("Parsing " + msg)
     linkRegex findAllIn msg.text foreach (
@@ -35,7 +25,7 @@ class Parser extends Actor {
         case linkRegex(link, _) => download(link)
         case _ => log.debug("No links found")
       })
-    msg.text
+    sender ! msg.text
   }
 
   def download(link: String) = {

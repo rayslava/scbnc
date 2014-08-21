@@ -1,0 +1,5 @@
+package com.rayslava.scbnc
+/**
+  This package implements functions for parsing received messages and
+  extract all the interesting information from there
+  */
