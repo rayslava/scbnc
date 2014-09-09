@@ -1,5 +1,7 @@
 import com.typesafe.sbt.SbtNativePackager._
 import NativePackagerKeys._
+import scoverage.ScoverageSbtPlugin.instrumentSettings
+import org.scoverage.coveralls.CoverallsPlugin.coverallsSettings
 
 organization := "com.rayslava"
 
@@ -11,7 +13,7 @@ scalaVersion := "2.11.2"
 
 packageArchetype.java_application
 
-jacoco.settings
+instrumentSettings
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
