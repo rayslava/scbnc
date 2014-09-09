@@ -12,6 +12,13 @@ object types {
     override def toString = text
   }
 
+  /**
+   * Service message which will say a goodbye to server and ask to close a connection
+   * @param quitMessage A goodbye message
+   */
+  case class DCMessage(quitMessage: String) {
+    override def toString = "Disconnecting message '" + quitMessage + "'"
+  }
 
   /** Http link object
     *
@@ -23,7 +30,7 @@ object types {
     override def toString = url
   }
 
-  class ImageLink(url: String) extends Link(url) {
+  case class ImageLink(url: String) {
     override def toString = "Image from " + url
   }
 }

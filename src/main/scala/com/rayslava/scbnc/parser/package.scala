@@ -13,11 +13,9 @@ class Parser extends Actor {
   def parse(msg: Message): Unit = {
     val linkRegex = """(http://[^\s]+)(\s|$)""".r
     log.debug("Parsing " + msg)
-    linkRegex findAllIn msg.text foreach (
-      {
-        case linkRegex(link, _) => download(link)
-        case _ => log.debug("No links found")
-      })
+    linkRegex findAllIn msg.text foreach {
+      case linkRegex(link, _) => download(link)
+    }
     sender ! msg.text
   }
 
