@@ -17,6 +17,12 @@ instrumentSettings
 
 coverallsSettings
 
+ScoverageKeys.excludedPackages in ScoverageCompile := "<empty>;com.rayslava.scbnc.package;com.rayslava.MyActor"
+
+ScoverageKeys.minimumCoverage := 75
+
+ScoverageKeys.failOnMinimumCoverage := true
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "com.typesafe.akka" %% "akka-testkit" % "2.3.4",
