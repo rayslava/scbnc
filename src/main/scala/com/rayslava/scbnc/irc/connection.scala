@@ -10,6 +10,8 @@ import com.rayslava.scbnc.types.{Message,DCMessage}
 class Connection(server: String, port: Integer) extends Actor {
   val log = Logging(context.system, this)
 
+  val socket = connect
+
   /**
    * Connects to server:port
    */

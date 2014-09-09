@@ -28,10 +28,10 @@ class typeTest extends  Specification {
     "be printed as Link: 'link'" in {
       val url = "http://link.test"
 
-      val l = Link(url)
+      val l = new Link(url)
       l.toString() must be_==(url)
 
-      val il = ImageLink(url)
+      val il = new ImageLink(url)
       il.toString() must be_==("Image from " + url)
     }
   }
