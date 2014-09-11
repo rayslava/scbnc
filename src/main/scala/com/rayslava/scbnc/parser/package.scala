@@ -24,9 +24,11 @@ class Parser extends Actor {
     log.debug("Download request for '" + link + "'")
   }
 
+  // $COVERAGE-OFF$
   def receive = {
     case msg @ Message(text) => parse(msg)
     case data: ByteString => parse(Message(data.toString))
     case _ => log.info("Unexpected object to parse")
   }
+  // $COVERAGE-ON$
 }

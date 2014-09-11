@@ -61,6 +61,7 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
     log.info("Connection closed")
   }
 
+  // $COVERAGE-OFF$
   def receive = {
     case "connect" => connect
 
@@ -84,4 +85,5 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
       }
     }
   }
+  // $COVERAGE-ON$
 }
