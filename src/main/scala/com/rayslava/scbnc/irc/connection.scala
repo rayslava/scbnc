@@ -24,6 +24,7 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
   val log = Logging(context.system, this)
 
   def tcp: ActorRef = IO(Tcp)
+  val parser = listener
 
   /**
    * Connects to server:port
@@ -39,42 +40,48 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    */
   def disconnect(quitMessage: String) = {
     log.debug("Disconnecting from server with '" + quitMessage + "'")
+    tcp ! Close
   }
 
   /**
    * Send a text message to server
    * @param msg Message with text to send
    */
-  def sendToServer(msg: Message) = {
-    val line = msg.text
+  def sendToServer(msg: ByteString) = {
+    tcp ! Write(msg)
 
-    sender ! "sent"
+    sender() ! "sent"
+  }
+
+  /**
+   * Perform finishing jobs after connection is closed from another side
+   * @return
+   */
+  def connectionClosed = {
+    log.info("Connection closed")
   }
 
   def receive = {
-    case msg @ Message(text) => sendToServer(msg)
     case "connect" => connect
 
-    case c @ Connected(remote, local) =>
-      listener ! c
-      val connection = sender()
-
-      connection ! Register(self)
+    case c @ Connected(remote, local) => {
       context become {
+        case msg @ Message(text) =>
+          sendToServer(ByteString(msg.toString))
         case data: ByteString =>
           log.debug("Received data: " + data)
-          connection ! Write(data)
-        case CommandFailed(w: Write) =>
-          log.warning("Write failed, OS buffer was full")
+          sendToServer(data)
         case Received(data) =>
           log.debug("Received data: " + data)
-          listener ! Message(data.toString())
+          parser ! data
         case msg @ DCMessage(text) =>
           disconnect(msg.quitMessage)
-          connection ! Close
+        case CommandFailed(w: Write) =>
+          log.warning("Write failed, OS buffer was full")
         case _: ConnectionClosed =>
-          log.debug("connection closed")
+          connectionClosed
           context stop self
       }
+    }
   }
 }

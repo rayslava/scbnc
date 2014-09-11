@@ -5,6 +5,7 @@ package com.rayslava.scbnc.parser
 
 import akka.actor.Actor
 import akka.event.Logging
+import akka.util.ByteString
 import com.rayslava.scbnc.types.Message
 
 class Parser extends Actor {
@@ -25,5 +26,7 @@ class Parser extends Actor {
 
   def receive = {
     case msg @ Message(text) => parse(msg)
+    case data: ByteString => parse(Message(data.toString))
+    case _ => log.info("Unexpected object to parse")
   }
 }
