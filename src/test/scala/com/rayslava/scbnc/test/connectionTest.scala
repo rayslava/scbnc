@@ -40,6 +40,7 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
 
   val listener = TestActorRef(new Parser)
 
+  val user = "user"
   val line = "test line"
   val response = "sent"
   val connectmsg = "connect"
@@ -101,6 +102,7 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
       actorRef ! Connected(remoteAddr, localAddr)
 
       actorRef ! disconnectmsg
+      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString("QUIT :" + disconnectmsg.quitMessage))
       tcpProbe.expectMsgType[Close.type] must be equalTo Close
     }
   }
@@ -130,6 +132,22 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
       actorRef ! Closed
 
       probe.expectMsg(Closed)
+    }
+  }
+
+  "Logging in" should {
+    "register an IRC connection" in new TKSpec2 {
+      val probe = TestProbe()
+
+      val actorRef = TestActorRef(new Client(testserver, testport, listener) {
+        override def tcp = probe.ref
+      })
+      actorRef ! Connected(remoteAddr, localAddr)
+      actorRef ! LoginMessage(user)
+
+      probe.expectMsg(Write(ByteString("PASS *")))
+      probe.expectMsg(Write(ByteString("NICK " + user)))
+      probe.expectMsg(Write(ByteString("USER " + user + " 0 * " + user)))
     }
   }
 }

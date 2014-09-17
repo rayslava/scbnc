@@ -7,7 +7,7 @@ import akka.io.{ IO, Tcp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
 
-import com.rayslava.scbnc.types.{Message,DCMessage}
+import com.rayslava.scbnc.types.{LoginMessage, Message, DCMessage}
 
 object Client {
   def props(remote: InetSocketAddress, replies: ActorRef) =
@@ -32,6 +32,7 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
   def connect = {
     val remote = new InetSocketAddress(server, port)
     tcp ! Connect(remote)
+
   }
 
   /**
@@ -40,8 +41,19 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    */
   def disconnect(quitMessage: String) = {
     log.debug("Disconnecting from server with '" + quitMessage + "'")
+    sendToServer("QUIT :" + quitMessage)
+
     tcp ! Close
   }
+
+  /**
+   * Send a text message to server
+   * @param msg Message with text to send
+   */
+  def sendToServer(msg: String): Unit = {
+    sendToServer(ByteString(msg))
+  }
+
 
   /**
    * Send a text message to server
@@ -59,6 +71,30 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    */
   def connectionClosed = {
     log.info("Connection closed")
+  }
+
+  /**
+   * Register a connection accordingly 1459
+   *
+   * @param nickname Bot nickname shown on channel
+   * @param username Username for irc registration
+   * @param password IRC connection password
+   * @param mode IRC connection mode
+   * PASS <password>
+   * NICK <nickname>
+   * USER <user> <mode> <unused> <realname>
+   *
+   */
+  def registerConnection(nickname: String, username: String, password: String = "*", mode: Integer = 0) = {
+    val helloString = "PASS " + password
+    val nickString = "NICK " + nickname
+    val userString = "USER " + username + " " + mode.toString() + " * " + username
+
+    log.debug("Logging in as " + nickname)
+
+    sendToServer(helloString)
+    sendToServer(nickString)
+    sendToServer(userString)
   }
 
   // $COVERAGE-OFF$
@@ -79,6 +115,8 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
           disconnect(msg.quitMessage)
         case CommandFailed(w: Write) =>
           log.warning("Write failed, OS buffer was full")
+        case LoginMessage(nick: String) =>
+          registerConnection(nick, nick)
         case _: ConnectionClosed =>
           connectionClosed
           context stop self

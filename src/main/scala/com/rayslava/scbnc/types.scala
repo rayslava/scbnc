@@ -20,6 +20,14 @@ object types {
     override def toString = "Disconnecting message '" + quitMessage + "'"
   }
 
+  /**
+   * Message to log to server
+   * @param nick Nickname for login
+   */
+  case class LoginMessage(nick: String) {
+    override def toString = "Login message as " + nick
+  }
+
   /** Http link object
     *
     * Initiate a download request during creation and saves a data ID in @param Data field
