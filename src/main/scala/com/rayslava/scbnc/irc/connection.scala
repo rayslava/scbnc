@@ -1,24 +1,18 @@
 package com.rayslava.scbnc.irc
 
-import akka.actor.Actor
-import akka.event.Logging
-import akka.actor.{ Actor, ActorRef, Props }
-import akka.io.{ IO, Tcp }
-import akka.util.ByteString
 import java.net.InetSocketAddress
 
-import com.rayslava.scbnc.types.{LoginMessage, Message, DCMessage}
-
-object Client {
-  def props(remote: InetSocketAddress, replies: ActorRef) =
-    Props(classOf[Client], remote, replies)
-}
+import akka.actor.{Actor, ActorRef}
+import akka.event.Logging
+import akka.io.{IO, Tcp}
+import akka.util.ByteString
+import com.rayslava.scbnc.types.{DCMessage, LoginMessage, Message}
 
 /**
  * IRC connection client
  */
 class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
-  import Tcp.{Connect,CommandFailed,Connected,Register,Write,Received,Close,ConnectionClosed}
+  import akka.io.Tcp.{CommandFailed, Connect, Connected, ConnectionClosed, Received, Register, Write}
   import context.system
 
   val log = Logging(context.system, this)
@@ -35,23 +29,13 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
 
   }
 
-  /**
-   * Disconnect from server and send quitMessage
-   * @param quitMessage Line to use as IRC quit message
-   */
-  def disconnect(quitMessage: String) = {
-    log.debug("Disconnecting from server with '" + quitMessage + "'")
-    sendToServer("QUIT :" + quitMessage)
-
-    tcp ! Close
-  }
 
   /**
    * Send a text message to server
    * @param msg Message with text to send
    */
-  def sendToServer(msg: String): Unit = {
-    sendToServer(ByteString(msg))
+  def sendToServer(msg: String, connection: ActorRef): Unit = {
+    sendToServer(ByteString(msg), connection)
   }
 
 
@@ -59,10 +43,9 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    * Send a text message to server
    * @param msg Message with text to send
    */
-  def sendToServer(msg: ByteString) = {
-    tcp ! Write(msg)
-
-    sender() ! "sent"
+  def sendToServer(msg: ByteString, connection: ActorRef) = {
+    log.debug("Writing \"" + msg.decodeString("US-ASCII") + "\"")
+    connection ! Write(msg)
   }
 
   /**
@@ -78,6 +61,7 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    *
    * @param nickname Bot nickname shown on channel
    * @param username Username for irc registration
+   * @param connection Connection actor ref
    * @param password IRC connection password
    * @param mode IRC connection mode
    * PASS <password>
@@ -85,16 +69,16 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
    * USER <user> <mode> <unused> <realname>
    *
    */
-  def registerConnection(nickname: String, username: String, password: String = "*", mode: Integer = 0) = {
-    val helloString = "PASS " + password
-    val nickString = "NICK " + nickname
-    val userString = "USER " + username + " " + mode.toString() + " * " + username
+  def registerConnection(nickname: String, username: String, connection: ActorRef, password: String = "*", mode: Integer = 0) = {
+    val helloString = ByteString("PASS " + password + "\r\n")
+    val nickString = ByteString("NICK " + nickname + "\r\n")
+    val userString = ByteString("USER " + username + " " + mode.toString() + " * :" + username + " " + username + "\r\n")
 
     log.debug("Logging in as " + nickname)
 
-    sendToServer(helloString)
-    sendToServer(nickString)
-    sendToServer(userString)
+    sendToServer(helloString, connection)
+    sendToServer(nickString, connection)
+    sendToServer(userString, connection)
   }
 
   // $COVERAGE-OFF$
@@ -102,21 +86,25 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
     case "connect" => connect
 
     case c @ Connected(remote, local) => {
+      val connection = sender()
+      log.debug("Connected to " + remote)
+      connection ! Register(self)
       context become {
         case msg @ Message(text) =>
-          sendToServer(ByteString(msg.toString))
+          sendToServer(ByteString(msg.toString), connection)
         case data: ByteString =>
-          log.debug("Received data: " + data)
-          sendToServer(data)
+          log.debug("Received " + data.length + " bytes of data")
+          sendToServer(data, connection)
         case Received(data) =>
-          log.debug("Received data: " + data)
+          log.debug("Received Received() with " + data.length + " bytes of payload")
           parser ! data
         case msg @ DCMessage(text) =>
-          disconnect(msg.quitMessage)
+          log.debug("Disconnecting from server with '" + msg.quitMessage + "'")
+          sendToServer("QUIT :" + msg.quitMessage + "\r\n", connection)
         case CommandFailed(w: Write) =>
           log.warning("Write failed, OS buffer was full")
         case LoginMessage(nick: String) =>
-          registerConnection(nick, nick)
+          registerConnection(nick, nick, connection)
         case _: ConnectionClosed =>
           connectionClosed
           context stop self

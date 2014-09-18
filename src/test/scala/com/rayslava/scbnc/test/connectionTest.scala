@@ -4,20 +4,17 @@ import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
 import akka.io.Tcp._
-import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestKit, TestProbe, TestActorRef}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.{ByteString, Timeout}
 import com.rayslava.scbnc.irc.Client
 import com.rayslava.scbnc.parser.Parser
-import com.rayslava.scbnc.types.Message
-import com.rayslava.scbnc.types._
+import com.rayslava.scbnc.types.{Message, _}
 import com.typesafe.config._
 import org.specs2.mock.Mockito
-import org.specs2.mutable.Specification
-import scala.concurrent.duration._
-import scala.util.{Success}
-import org.specs2.mutable._
+import org.specs2.mutable.{Specification, _}
 import org.specs2.time.NoTimeConversions
+
+import scala.concurrent.duration._
 
 class connectionRTest(_system: ActorSystem) extends TestKit(_system) with Mockito {
 
@@ -44,6 +41,7 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
   val line = "test line"
   val response = "sent"
   val connectmsg = "connect"
+  val crlf = "\r\n"
   val disconnectmsg = DCMessage(line)
   val remoteAddr = new InetSocketAddress(testserver, testport)
   val localAddr = new InetSocketAddress(testserver, testport)
@@ -63,21 +61,14 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
   }
 
   "Sending line to connection" should {
-    "return '" + response + "'" in new TKSpec2 {
-      val actorRef = TestActorRef(new Client(testserver, testport, listener))
-      actorRef ! Connected(remoteAddr, localAddr)
-
-      val future = actorRef ? new Message(line)
-      val Success(result: String) = future.value.get
-      result must be(response)
-    }
     "send data to tcp" in new TKSpec2 {
       val tcpProbe = TestProbe()
       val actorRef = TestActorRef(new Client(testserver, testport, listener) {
         override def tcp = tcpProbe.ref
       })
-      actorRef ! Connected(remoteAddr, localAddr)
-      actorRef ! new Message(line)
+      tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
+      tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
+      tcpProbe.send(actorRef, new Message(line))
       tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString(line))
     }
     "even if line is in ByteString" in new TKSpec2 {
@@ -85,10 +76,11 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
       val actorRef = TestActorRef(new Client(testserver, testport, listener) {
         override def tcp = tcpProbe.ref
       })
-      actorRef ! Connected(remoteAddr, localAddr)
-      val future = actorRef ? ByteString(line)
-      val Success(result: String) = future.value.get
-      (tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString(line))) && (result must be(response))
+      tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
+      tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
+
+      tcpProbe.send(actorRef, ByteString(line))
+      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString(line))
     }
   }
 
@@ -99,11 +91,11 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
         override def tcp = tcpProbe.ref
       })
 
-      actorRef ! Connected(remoteAddr, localAddr)
+      tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
+      tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
 
-      actorRef ! disconnectmsg
-      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString("QUIT :" + disconnectmsg.quitMessage))
-      tcpProbe.expectMsgType[Close.type] must be equalTo Close
+      tcpProbe.send(actorRef, disconnectmsg)
+      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString("QUIT :" + disconnectmsg.quitMessage + crlf))
     }
   }
 
@@ -137,17 +129,18 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
 
   "Logging in" should {
     "register an IRC connection" in new TKSpec2 {
-      val probe = TestProbe()
+      val tcpProbe = TestProbe()
 
       val actorRef = TestActorRef(new Client(testserver, testport, listener) {
-        override def tcp = probe.ref
+        override def tcp = tcpProbe.ref
       })
-      actorRef ! Connected(remoteAddr, localAddr)
-      actorRef ! LoginMessage(user)
+      tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
+      tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
+      tcpProbe.send(actorRef, LoginMessage(user))
 
-      probe.expectMsg(Write(ByteString("PASS *")))
-      probe.expectMsg(Write(ByteString("NICK " + user)))
-      probe.expectMsg(Write(ByteString("USER " + user + " 0 * " + user)))
+      tcpProbe.expectMsg(Write(ByteString("PASS *" + crlf)))
+      tcpProbe.expectMsg(Write(ByteString("NICK " + user + crlf)))
+      tcpProbe.expectMsg(Write(ByteString("USER " + user + " 0 * :" + user + " " + user + crlf)))
     }
   }
 }

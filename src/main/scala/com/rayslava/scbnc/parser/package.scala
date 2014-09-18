@@ -10,14 +10,14 @@ import com.rayslava.scbnc.types.Message
 
 class Parser extends Actor {
   val log = Logging(context.system, this)
+  val storage = sender()
 
   def parse(msg: Message): Unit = {
     val linkRegex = """(http://[^\s]+)(\s|$)""".r
-    log.debug("Parsing " + msg)
+    log.debug("Parsing " + msg.text)
     linkRegex findAllIn msg.text foreach {
       case linkRegex(link, _) => download(link)
     }
-    sender ! msg.text
   }
 
   def download(link: String) = {
@@ -27,7 +27,7 @@ class Parser extends Actor {
   // $COVERAGE-OFF$
   def receive = {
     case msg @ Message(text) => parse(msg)
-    case data: ByteString => parse(Message(data.toString))
+    case data: ByteString => parse(Message(data.decodeString("US-ASCII")))
     case _ => log.info("Unexpected object to parse")
   }
   // $COVERAGE-ON$

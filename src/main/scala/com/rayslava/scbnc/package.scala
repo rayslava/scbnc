@@ -1,21 +1,9 @@
 package com.rayslava
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.event.Logging
+import akka.actor.{ActorSystem, Props}
+import com.rayslava.scbnc.irc.Client
 import com.rayslava.scbnc.parser.Parser
-import com.rayslava.scbnc.types.Message
-
-case class Vote(id: Int)
-
-class MyActor extends Actor {
-  val log = Logging(context.system, this)
-  def receive = {
-    case "test" => log.info("received test")
-    case vote @ Vote(id) => log.info("VOTE " + vote.id)
-    case msg @ Message(text) => log.info("Chat message for parser '" + msg.text +"'")
-    case _      => log.info("received unknown message")
-  }
-}
+import com.rayslava.scbnc.types.{DCMessage, LoginMessage}
 
 package object scbnc {
 
@@ -29,17 +17,20 @@ package object scbnc {
     println("Hey there!")
     val system = ActorSystem("MainSys")
 
-    val mya = system.actorOf(Props[MyActor], "mya")
-    val initial_parser = system.actorOf(Props[Parser], "initial_parser")
+    val initialParser = system.actorOf(Props[Parser], "initial_parser")
+    val ircClient = system.actorOf(Props(new Client("irc.freenode.net", 6667, initialParser)))
 
-    mya ! "test"
+    ircClient ! "connect"
 
-    println( func(4) )
+    Thread.sleep(2000L)
 
-    mya ! new Vote(12)
+    ircClient ! LoginMessage("scbnc")
 
-    val msg = new Message("Lol")
-    initial_parser ! msg
+    Thread.sleep(10000L)
+
+    ircClient ! DCMessage("bye")
+
+    Thread.sleep(2000L)
 
     system.shutdown()
 
