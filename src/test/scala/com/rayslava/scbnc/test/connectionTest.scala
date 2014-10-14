@@ -39,6 +39,8 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
 
   val user = "user"
   val line = "test line"
+  val channel = "testchannel"
+  val password = "testpassword"
   val response = "sent"
   val connectmsg = "connect"
   val crlf = "\r\n"
@@ -61,15 +63,15 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
   }
 
   "Sending line to connection" should {
-    "send data to tcp" in new TKSpec2 {
+    "send data to irc" in new TKSpec2 {
       val tcpProbe = TestProbe()
       val actorRef = TestActorRef(new Client(testserver, testport, listener) {
         override def tcp = tcpProbe.ref
       })
       tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
       tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
-      tcpProbe.send(actorRef, new Message(line))
-      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString(line))
+      tcpProbe.send(actorRef, new Message(line, channel))
+      tcpProbe.expectMsgType[Write] must be equalTo Write(ByteString("PRIVMSG " + channel + " :" + line))
     }
     "even if line is in ByteString" in new TKSpec2 {
       val tcpProbe = TestProbe()
@@ -141,6 +143,29 @@ class connectionResponses extends Specification with NoTimeConversions with Mock
       tcpProbe.expectMsg(Write(ByteString("PASS *" + crlf)))
       tcpProbe.expectMsg(Write(ByteString("NICK " + user + crlf)))
       tcpProbe.expectMsg(Write(ByteString("USER " + user + " 0 * :" + user + " " + user + crlf)))
+    }
+  }
+
+  "Channel operation module" should {
+    val tcpProbe = TestProbe()
+
+    val actorRef = TestActorRef(new Client(testserver, testport, listener) {
+      override def tcp = tcpProbe.ref
+    })
+    tcpProbe.send(actorRef, Connected(remoteAddr, localAddr))
+    tcpProbe.expectMsgType[Register] must be equalTo Register(actorRef)
+
+    "send a JOIN command" in new TKSpec2 {
+      tcpProbe.send(actorRef, JoinMessage(channel))
+      tcpProbe.expectMsg(Write(ByteString("JOIN #" + channel + crlf)))
+    }
+    "send a JOIN command with password" in new TKSpec2 {
+      tcpProbe.send(actorRef, JoinMessage(channel, password))
+      tcpProbe.expectMsg(Write(ByteString("JOIN #" + channel + " " + password + crlf)))
+    }
+    "send a PART command" in new TKSpec2 {
+      tcpProbe.send(actorRef, LeaveMessage(channel))
+      tcpProbe.expectMsg(Write(ByteString("PART #" + channel + crlf)))
     }
   }
 }

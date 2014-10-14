@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import com.rayslava.scbnc.types.{DCMessage, LoginMessage, Message}
+import com.rayslava.scbnc.types._
 
 /**
  * IRC connection client
@@ -26,7 +26,6 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
   def connect = {
     val remote = new InetSocketAddress(server, port)
     tcp ! Connect(remote)
-
   }
 
 
@@ -90,8 +89,8 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
       log.debug("Connected to " + remote)
       connection ! Register(self)
       context become {
-        case msg @ Message(text) =>
-          sendToServer(ByteString(msg.toString), connection)
+        case msg @ Message(text, target) =>
+          sendToServer("PRIVMSG " + target + " :" + text, connection)
         case data: ByteString =>
           log.debug("Received " + data.length + " bytes of data")
           sendToServer(data, connection)
@@ -101,6 +100,15 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
         case msg @ DCMessage(text) =>
           log.debug("Disconnecting from server with '" + msg.quitMessage + "'")
           sendToServer("QUIT :" + msg.quitMessage + "\r\n", connection)
+        case msg @ JoinMessage(channel, password) =>
+          log.debug("Joining channel '" + channel + "' with password '" + password + "'")
+          sendToServer("JOIN " +  {if (password.isEmpty())
+                                  {"#" + channel} else
+                                  {"#" + channel + " " + password}}
+                               + "\r\n", connection)
+        case msg @ LeaveMessage(channel) =>
+          log.debug("Leaving channel '" + channel + "'")
+          sendToServer("PART #" + channel + "\r\n", connection)
         case CommandFailed(w: Write) =>
           log.warning("Write failed, OS buffer was full")
         case LoginMessage(nick: String) =>

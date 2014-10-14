@@ -6,9 +6,10 @@ package com.rayslava.scbnc
 object types {
   /** One single text message
     *
-    * @param text --- String with message
+    * @param text String with message
+    * @param recipient Name of message recipient
     */
-  case class Message(text: String) {
+  case class Message(text: String, recipient: String) {
     override def toString = text
   }
 
@@ -19,6 +20,19 @@ object types {
   case class DCMessage(quitMessage: String) {
     override def toString = "Disconnecting message '" + quitMessage + "'"
   }
+
+  /**
+   * Service message to join a conference or channel
+   * @param conference Conference/channel name
+   * @param password Password to join (if any), null by default
+   */
+  case class JoinMessage(conference: String, password: String = "");
+
+  /**
+   * Service message to leave a conference
+   * @param conference Conference/channel name
+   */
+  case class LeaveMessage(conference: String);
 
   /**
    * Message to log to server

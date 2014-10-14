@@ -17,7 +17,8 @@ class typeTest extends  Specification {
   "Message with text" should {
     "be printed as 'text'" in {
       val text = "text"
-      val msg = new Message(text)
+      val recipient = "recipient"
+      val msg = new Message(text, recipient)
       msg.toString() must be_==(text)
 
       val dcmsg = new DCMessage(text)

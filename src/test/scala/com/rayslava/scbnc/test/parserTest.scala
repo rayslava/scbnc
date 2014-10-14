@@ -15,10 +15,13 @@ class parsePlainText extends Specification with Mockito {
   val actorRef = TestActorRef(new Parser)
   val actor = actorRef.underlyingActor
 
+  val line = "Just plaintext line"
+  val recipient = "recipient"
+
   "Parsing plain text line" should {
     "return this line" in {
       val obj = spy(actor)
-      obj.parse(new Message("Just plaintext line"))
+      obj.parse(new Message(line, recipient))
       there was no(obj).download(anyObject())
     }
   }
@@ -29,6 +32,7 @@ class parseTextWithLink extends Specification with Mockito {
 
   val link = "http://site.com"
   val text = "Single link "
+  val recipient = "recipient"
 
   val actorRef = TestActorRef(new Parser)
   val actor = actorRef.underlyingActor
@@ -36,12 +40,12 @@ class parseTextWithLink extends Specification with Mockito {
   "Parsing text with links" should {
     "call download for " + link + " and return the same line" in {
       val obj = spy(actor)
-      obj.parse(new Message(text + link))
+      obj.parse(new Message(text + link, recipient))
       there was one(obj).download(link)
     }
     "call download for each link if there are many" in {
       val obj = spy(actor)
-      obj.parse(new Message(text + link + " " + link))
+      obj.parse(new Message(text + link + " " + link, recipient))
       there was two(obj).download(link)
     }
   }
