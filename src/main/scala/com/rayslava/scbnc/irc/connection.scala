@@ -90,7 +90,7 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
       connection ! Register(self)
       context become {
         case msg @ Message(text, target) =>
-          sendToServer("PRIVMSG " + target + " :" + text, connection)
+          sendToServer("PRIVMSG " + target + " :" + text + "\r\n", connection)
         case data: ByteString =>
           log.debug("Received " + data.length + " bytes of data")
           sendToServer(data, connection)
@@ -101,10 +101,11 @@ class Client(server: String, port: Integer, listener: ActorRef) extends Actor {
           log.debug("Disconnecting from server with '" + msg.quitMessage + "'")
           sendToServer("QUIT :" + msg.quitMessage + "\r\n", connection)
         case msg @ JoinMessage(channel, password) =>
+          val prefix = if (channel.startsWith("#")) "" else "#"
           log.debug("Joining channel '" + channel + "' with password '" + password + "'")
           sendToServer("JOIN " +  {if (password.isEmpty())
-                                  {"#" + channel} else
-                                  {"#" + channel + " " + password}}
+                                  {prefix + channel} else
+                                  {prefix + channel + " " + password}}
                                + "\r\n", connection)
         case msg @ LeaveMessage(channel) =>
           log.debug("Leaving channel '" + channel + "'")
