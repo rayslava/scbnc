@@ -28,6 +28,6 @@ ScoverageKeys.failOnMinimumCoverage := true
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.6",
   "com.typesafe.akka" %% "akka-testkit" % "2.3.6",
-  "org.mockito" % "mockito-core" % "1.9.5",
-  "org.specs2" %% "specs2" % "2.4.4" % "test"
+  "org.mockito" % "mockito-core" % "1.10.8",
+  "org.specs2" %% "specs2" % "2.4.11" % "test"
 )
