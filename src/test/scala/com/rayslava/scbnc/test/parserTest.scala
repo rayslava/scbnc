@@ -16,12 +16,21 @@ class parsePlainText extends Specification with Mockito {
   val actor = actorRef.underlyingActor
 
   val line = "Just plaintext line"
+  val ircLine = ":user!~login@0.1.2.3 PRIVMSG #testchannel :TEST!"
   val recipient = "recipient"
 
   "Parsing plain text line" should {
     "return this line" in {
       val obj = spy(actor)
       obj.parse(new Message(line, recipient))
+      there was no(obj).download(anyObject())
+    }
+  }
+
+  "Parsing IRC message" should {
+    "create an IRCMessage and store it" in {
+      val obj = spy(actor)
+      obj.parse(new Message(ircLine, recipient))
       there was no(obj).download(anyObject())
     }
   }
