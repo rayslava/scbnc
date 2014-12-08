@@ -11,7 +11,7 @@ name := "scbnc"
 
 version := "0.1"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.4"
 
 packageArchetype.java_application
 
@@ -26,8 +26,8 @@ ScoverageKeys.minimumCoverage := 75
 ScoverageKeys.failOnMinimumCoverage := true
 
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-actor" % "2.3.6",
-  "com.typesafe.akka" %% "akka-testkit" % "2.3.6",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.7",
+  "com.typesafe.akka" %% "akka-testkit" % "2.3.7",
   "org.mockito" % "mockito-core" % "1.10.8",
   "org.specs2" %% "specs2" % "2.4.11" % "test"
 )
